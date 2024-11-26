@@ -1,0 +1,34 @@
+use axum::{extract::{State, Json}, http::StatusCode, response::IntoResponse};
+use crate::db::{mongo::AppState, user_db::insert_user};
+use crate:: models::user_models::{CreateUserModel, User};
+use std::sync::Arc;
+use serde_json::json;
+
+pub async fn create_user(
+    State(state): State<Arc<AppState>>, Json(payload): Json<CreateUserModel>,  // Recebe o payload da requisição
+) -> impl IntoResponse {  // Especifica que a função implementa IntoResponse
+    // Criação do usuário com os dados recebidos
+    let user = User::new(
+        payload.name,
+        payload.email,
+        payload.password,
+        payload.state,
+        payload.city,
+        payload.role,
+    );
+
+    match insert_user(&state, &user).await {
+        Ok(_insert_result) => {
+            // Retorna o status de criação e o usuário como JSON
+            (StatusCode::CREATED, Json(user))
+        },
+        Err(err) => {
+            // Caso ocorra erro, retorna um erro genérico em formato JSON
+            let error_response = json!({
+                "error": format!("Erro ao inserir usuário: {}", err)
+            });
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(user))
+        }
+    }
+
+}
