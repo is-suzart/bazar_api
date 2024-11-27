@@ -1,4 +1,4 @@
-use argon2::{password_hash::{SaltString, PasswordHasher}, Argon2};
+use argon2::{password_hash::{PasswordHasher, SaltString}, Argon2, PasswordVerifier};
 use rand::rngs::OsRng; // Gerador de números aleatórios seguro
 
 pub fn hash(password: &str) -> (String, String) {
@@ -16,4 +16,10 @@ pub fn hash(password: &str) -> (String, String) {
         .to_string(); // Converte o hash para string
 
     (hashed_password, salt.to_string())
+}
+pub fn verify(password: &str, hashed_password: &str, _salt: &str) -> bool {
+    let argon2 = Argon2::default();
+    let parsed_hash = argon2::password_hash::PasswordHash::new(hashed_password).unwrap();
+
+    argon2.verify_password(password.as_bytes(), &parsed_hash).is_ok()
 }

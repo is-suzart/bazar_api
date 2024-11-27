@@ -1,5 +1,5 @@
 use axum::{extract::{Json, Path, State}, http::StatusCode, response::IntoResponse};
-use crate::{db::{mongo::AppState, user_db::{insert_user, query_user_with_id}}, helpers::token::generate_jwt, models::user_models::ResponseUser, response::user_response::{CreateUserResponse, QueryUserResponse}};
+use crate::{db::{mongo::AppState, user_db::{insert_user, query_user_by_email, query_user_with_id}}, helpers::{password::verify, token::generate_jwt}, models::user_models::{LoginUserModel, ResponseUser}, response::user_response::{CreateUserResponse, QueryUserResponse}};
 use crate:: models::user_models::{CreateUserModel, User};
 use std::sync::Arc;
 use crate::helpers::password;
@@ -49,6 +49,29 @@ pub async fn get_user_with_id(
         }
         Err(err) => { 
             (StatusCode::INTERNAL_SERVER_ERROR,Json(QueryUserResponse::Error { status: err.to_string(), message: "Erro interno".to_string() }))
+        }
+    }
+}
+
+pub async fn login_user(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<LoginUserModel>
+) -> impl IntoResponse {
+    match query_user_by_email(&state, &payload.email).await {
+        Ok(Some(doc)) => {
+            let user: User = bson::from_bson(bson::Bson::Document(doc)).unwrap();
+            if verify(&payload.password, &user.password, &user.salt) {
+                let token = generate_jwt(&user.id.to_string());
+                (StatusCode::OK, Json(CreateUserResponse::Success { status: "success".to_string(), id: Some(user.id), token }))
+            } else {
+                (StatusCode::UNAUTHORIZED, Json(CreateUserResponse::Error { status: "unauthorized".to_string(), message: "Credenciais inválidas".to_string() }))
+            }
+        },
+        Ok(None) => { 
+            (StatusCode::NOT_FOUND, Json(CreateUserResponse::Error { status: "not_found".to_string(), message: "Usuário não encontrado".to_string() }))
+        }
+        Err(err) => {
+            (StatusCode::INTERNAL_SERVER_ERROR,Json(CreateUserResponse::Error { status: err.to_string(), message: "Erro interno".to_string() }))
         }
     }
 }

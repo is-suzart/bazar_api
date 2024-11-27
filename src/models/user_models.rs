@@ -78,4 +78,10 @@ pub struct CreateUserModel {
     pub role: String,
 }
 
+#[derive(Deserialize)]
+pub struct LoginUserModel {
+    pub email: String,
+    pub password: String,
+}
+
 

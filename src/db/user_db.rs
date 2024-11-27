@@ -31,3 +31,12 @@ pub async fn query_user_with_id(
 
 
 }
+
+pub async fn query_user_by_email(
+    app_state: &Arc<AppState>,
+    email: &String
+) -> mongodb::error::Result<Option<Document>> {
+    let collection: Collection<Document> = app_state.database.collection("users");
+    let doc = collection.find_one(doc! { "email": email }).await?;
+    Ok(doc)
+}
