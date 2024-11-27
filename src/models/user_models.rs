@@ -9,6 +9,7 @@ pub struct User {
     pub name: String,
     pub email: String,
     pub password: String,
+    pub salt: String,
     pub created_at: String,
     pub updated_at: String,
     pub state: String,
@@ -18,7 +19,7 @@ pub struct User {
 }
 
 impl User {
-    pub fn new(name: String, email: String, password: String, state: String, city: String, role: String) -> Self {
+    pub fn new(name: String, email: String, password: String, salt: String, state: String, city: String, role: String) -> Self {
         let timestamp = Utc::now().to_rfc3339(); // Pega o horário atual em formato ISO
         let final_id = Uuid::new_v4();
         User {
@@ -26,6 +27,7 @@ impl User {
             name,
             email,
             password,
+            salt,
             created_at: timestamp.clone(),
             updated_at: timestamp,
             state,
@@ -45,4 +47,11 @@ pub struct CreateUserModel {
     pub state: String,
     pub city: String,
     pub role: String,
+}
+
+
+#[derive(Serialize, Deserialize)]
+pub enum Response {
+    Success { status: String, id: Option<String> },
+    Error { status: String, message: String },
 }

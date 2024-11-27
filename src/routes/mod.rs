@@ -6,7 +6,7 @@ use axum::Router;
 
 use crate::db::mongo::AppState;
 
-// Função que combina todas as rotas
+#[allow(dead_code)]
 pub fn user_routes() -> Router<Arc<AppState>> {
     user_routes::routes()
 }

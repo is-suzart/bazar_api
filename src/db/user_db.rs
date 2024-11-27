@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
-use mongodb::{bson::{Document, to_bson}, Collection, Client};
-use tokio::sync::Mutex;
+use mongodb::{bson::{Document, to_bson}, Collection};
 use crate::{models::user_models::User, AppState};
 use mongodb::results::InsertOneResult;
 

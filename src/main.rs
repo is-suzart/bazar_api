@@ -1,45 +1,37 @@
-use axum::Extension;
-use axum::{
-    routing::{get,post},
-    Router,
-};
-use controllers::user_controller;
-use db::mongo::{create_mongo_client,AppState};
+use axum::{ routing::get, Router };
+use db::mongo::{ create_mongo_client, AppState };
 use dotenv::dotenv;
 use std::net::IpAddr;
 use std::sync::Arc;
-
-
+use env_logger;
 
 mod db;
 mod routes;
 mod controllers;
 mod models;
+mod helpers;
 
 
 #[tokio::main]
 async fn main() {
-
+    env_logger::init();
     dotenv().ok();
 
     let mongo_client = create_mongo_client().await.unwrap();
 
-// Inicializa o AppState com o MongoDB
-let app_state = AppState::new(mongo_client);
+    // Inicializa o AppState com o MongoDB
+    let app_state = AppState::new(mongo_client);
 
-// Usa Arc para gerenciar o estado compartilhado de forma segura
-let shared_state = Arc::new(app_state);
-
+    // Usa Arc para gerenciar o estado compartilhado de forma segura
+    let shared_state = Arc::new(app_state);
 
     let app = Router::new()
         // `GET /` goes to `root`
         .route("/", get(root))
-        .route("/users", post(user_controller::create_user))
+        .merge(routes::user_routes::routes())
         .with_state(shared_state);
-        
-    
 
-        println!("🚀 Server started successfully");
+    println!("🚀 Server started successfully");
 
     // run our app with hyper, listening globally on port 8080
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8080").await.unwrap();

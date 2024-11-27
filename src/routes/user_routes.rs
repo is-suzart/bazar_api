@@ -1,4 +1,4 @@
-use axum::{routing::post, Extension, Router};
+use axum::{routing::post, Router};
 use crate::controllers::user_controller;
 use std::sync::Arc;
 use crate::db::mongo::AppState;
