@@ -39,10 +39,9 @@ pub async fn get_user_with_id(
 ) -> impl IntoResponse {
     match query_user_with_id(&state, &id).await {
         Ok(Some(doc)) => {
-            let user: User = bson::from_bson(bson::Bson::Document(doc)).unwrap();
-            let final_user: ResponseUser = ResponseUser::new(user.id, user.name, user.email, user.created_at, user.updated_at, user.state, user.city, user.profile_picture, user.role);
+            let user: ResponseUser = bson::from_bson(bson::Bson::Document(doc)).unwrap();
 
-            (StatusCode::OK, Json(QueryUserResponse::Success { status: "success".to_string(), user: final_user }))
+            (StatusCode::OK, Json(QueryUserResponse::Success { status: "success".to_string(), user }))
         },
         Ok(None) => { 
             (StatusCode::NOT_FOUND, Json(QueryUserResponse::NotFound { status: "not_found".to_string(), message: "Usuário não encontrado".to_string() }))

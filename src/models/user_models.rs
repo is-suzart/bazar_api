@@ -50,24 +50,6 @@ pub struct ResponseUser {
     pub role: String,
 }
 
-impl ResponseUser {
-    pub fn new(id:String,name: String, email: String,created_at:String,updated_at:String,
-        state: String, city: String, profile_picture:String, role: String) -> Self {
-
-        ResponseUser {
-            id,
-            name,
-            email,
-            created_at,
-            updated_at,
-            state,
-            city,
-            profile_picture,
-            role,
-        }
-    }
-}
-
 #[derive(Deserialize)]
 pub struct CreateUserModel {
     pub name: String,

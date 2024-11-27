@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mongodb::{bson::{doc, Document, to_bson}, Collection};
+use mongodb::{bson::{doc, to_bson, Document}, options::FindOneOptions, Collection};
 use crate::{models::user_models::User, AppState};
 use mongodb::results::InsertOneResult;
 
@@ -26,7 +26,10 @@ pub async fn query_user_with_id(
     id: &String
 ) -> mongodb::error::Result<Option<Document>> {
     let collection: Collection<Document> = app_state.database.collection("users");
-    let doc = collection.find_one(doc! { "id": id }).await?;
+    let options = FindOneOptions::builder()
+    .projection(doc! { "password": 0, "salt": 0 })
+    .build();
+    let doc = collection.find_one(doc! { "id": id}).with_options(options).await?;
     Ok(doc)
 
 
