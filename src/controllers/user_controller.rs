@@ -1,5 +1,5 @@
 use axum::{extract::{State, Json}, http::StatusCode, response::IntoResponse};
-use crate::{db::{mongo::AppState, user_db::insert_user}, helpers::token::generate_jwt, models::user_models::Response};
+use crate::{db::{mongo::AppState, user_db::insert_user}, helpers::token::generate_jwt, response::user_response::Response};
 use crate:: models::user_models::{CreateUserModel, User};
 use std::sync::Arc;
 use crate::helpers::password;
