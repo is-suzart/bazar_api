@@ -1,5 +1,5 @@
 use axum::{extract::{State, Json}, http::StatusCode, response::IntoResponse};
-use crate::{db::{mongo::AppState, user_db::insert_user}, models::user_models::Response};
+use crate::{db::{mongo::AppState, user_db::insert_user}, helpers::token::generate_jwt, models::user_models::Response};
 use crate:: models::user_models::{CreateUserModel, User};
 use std::sync::Arc;
 use crate::helpers::password;
@@ -22,8 +22,9 @@ pub async fn create_user(
 
     match insert_user(&state, &user).await {
         Ok(_insert_result) => {
+            let token = generate_jwt(&user.id.to_string());
             // Retorna o status de criação e o usuário como JSON
-            (StatusCode::CREATED, Json(Response::Success { status: _insert_result.inserted_id.to_string(), id: Some(user.id) }))
+            (StatusCode::CREATED, Json(Response::Success { status: _insert_result.inserted_id.to_string(), id: Some(user.id), token }))
         },
         Err(err) => {
             // Caso ocorra erro, retorna um erro genérico em formato JSON
