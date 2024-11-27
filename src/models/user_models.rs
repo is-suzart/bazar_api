@@ -37,7 +37,36 @@ impl User {
         }
     }
 }
+#[derive(Serialize, Deserialize)]
+pub struct ResponseUser {
+    pub id: String,
+    pub name: String,
+    pub email: String,
+    pub created_at: String,
+    pub updated_at: String,
+    pub state: String,
+    pub city: String,
+    pub profile_picture: String,
+    pub role: String,
+}
 
+impl ResponseUser {
+    pub fn new(id:String,name: String, email: String,created_at:String,updated_at:String,
+        state: String, city: String, profile_picture:String, role: String) -> Self {
+
+        ResponseUser {
+            id,
+            name,
+            email,
+            created_at,
+            updated_at,
+            state,
+            city,
+            profile_picture,
+            role,
+        }
+    }
+}
 
 #[derive(Deserialize)]
 pub struct CreateUserModel {

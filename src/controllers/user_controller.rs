@@ -1,5 +1,5 @@
-use axum::{extract::{State, Json}, http::StatusCode, response::IntoResponse};
-use crate::{db::{mongo::AppState, user_db::insert_user}, helpers::token::generate_jwt, response::user_response::Response};
+use axum::{extract::{Json, Path, State}, http::StatusCode, response::IntoResponse};
+use crate::{db::{mongo::AppState, user_db::{insert_user, query_user_with_id}}, helpers::token::generate_jwt, models::user_models::ResponseUser, response::user_response::{CreateUserResponse, QueryUserResponse}};
 use crate:: models::user_models::{CreateUserModel, User};
 use std::sync::Arc;
 use crate::helpers::password;
@@ -24,12 +24,31 @@ pub async fn create_user(
         Ok(_insert_result) => {
             let token = generate_jwt(&user.id.to_string());
             // Retorna o status de criação e o usuário como JSON
-            (StatusCode::CREATED, Json(Response::Success { status: _insert_result.inserted_id.to_string(), id: Some(user.id), token }))
+            (StatusCode::CREATED, Json(CreateUserResponse::Success { status: _insert_result.inserted_id.to_string(), id: Some(user.id), token }))
         },
         Err(err) => {
             // Caso ocorra erro, retorna um erro genérico em formato JSON
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(Response::Error { status:err.to_string(), message: String::from("Erro ao criar usuário!") }))
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(CreateUserResponse::Error { status:err.to_string(), message: String::from("Erro ao criar usuário!") }))
         }
     }
 
+}
+pub async fn get_user_with_id(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>
+) -> impl IntoResponse {
+    match query_user_with_id(&state, &id).await {
+        Ok(Some(doc)) => {
+            let user: User = bson::from_bson(bson::Bson::Document(doc)).unwrap();
+            let final_user: ResponseUser = ResponseUser::new(user.id, user.name, user.email, user.created_at, user.updated_at, user.state, user.city, user.profile_picture, user.role);
+
+            (StatusCode::OK, Json(QueryUserResponse::Success { status: "success".to_string(), user: final_user }))
+        },
+        Ok(None) => { 
+            (StatusCode::NOT_FOUND, Json(QueryUserResponse::NotFound { status: "not_found".to_string(), message: "Usuário não encontrado".to_string() }))
+        }
+        Err(err) => { 
+            (StatusCode::INTERNAL_SERVER_ERROR,Json(QueryUserResponse::Error { status: err.to_string(), message: "Erro interno".to_string() }))
+        }
+    }
 }

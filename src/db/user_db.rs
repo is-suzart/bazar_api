@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mongodb::{bson::{Document, to_bson}, Collection};
+use mongodb::{bson::{doc, Document, to_bson}, Collection};
 use crate::{models::user_models::User, AppState};
 use mongodb::results::InsertOneResult;
 
@@ -19,4 +19,15 @@ pub async fn insert_user(
 
     // Insere o usuário no banco de dados
     collection.insert_one(user_doc).await
+}
+
+pub async fn query_user_with_id(
+    app_state: &Arc<AppState>,
+    id: &String
+) -> mongodb::error::Result<Option<Document>> {
+    let collection: Collection<Document> = app_state.database.collection("users");
+    let doc = collection.find_one(doc! { "id": id }).await?;
+    Ok(doc)
+
+
 }
