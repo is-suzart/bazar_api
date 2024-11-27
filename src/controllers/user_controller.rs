@@ -1,5 +1,5 @@
 use axum::{extract::{Json, Path, State}, http::StatusCode, response::IntoResponse};
-use crate::{db::{mongo::AppState, user_db::{insert_user, query_user_by_email, query_user_with_id}}, helpers::{password::verify, token::generate_jwt}, models::user_models::{LoginUserModel, ResponseUser}, response::user_response::{CreateUserResponse, QueryUserResponse}};
+use crate::{db::{mongo::AppState, user_db::{insert_user, query_user_by_email, query_user_by_id}}, helpers::{password::verify, token::generate_jwt}, models::user_models::{LoginUserModel, ResponseUser}, response::user_response::{CreateUserResponse, QueryUserResponse}};
 use crate:: models::user_models::{CreateUserModel, User};
 use std::sync::Arc;
 use crate::helpers::password;
@@ -13,7 +13,9 @@ pub async fn create_user(
     let user = User::new(
         payload.name,
         payload.email,
+        
         hashed_password,
+        payload.telephone,
         salt,
         payload.state,
         payload.city,
@@ -37,7 +39,7 @@ pub async fn get_user_with_id(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>
 ) -> impl IntoResponse {
-    match query_user_with_id(&state, &id).await {
+    match query_user_by_id(&state, &id).await {
         Ok(Some(doc)) => {
             let user: ResponseUser = bson::from_bson(bson::Bson::Document(doc)).unwrap();
 
@@ -74,3 +76,4 @@ pub async fn login_user(
         }
     }
 }
+

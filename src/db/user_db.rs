@@ -21,7 +21,7 @@ pub async fn insert_user(
     collection.insert_one(user_doc).await
 }
 
-pub async fn query_user_with_id(
+pub async fn query_user_by_id(
     app_state: &Arc<AppState>,
     id: &String
 ) -> mongodb::error::Result<Option<Document>> {

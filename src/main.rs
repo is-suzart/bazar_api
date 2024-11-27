@@ -1,9 +1,10 @@
 use axum::{ routing::get, Router };
 use db::mongo::{ create_mongo_client, AppState };
 use dotenv::dotenv;
+use tracing::Level;
 use std::net::IpAddr;
 use std::sync::Arc;
-use env_logger;
+use tracing_subscriber;
 
 mod db;
 mod routes;
@@ -15,7 +16,10 @@ mod response;
 
 #[tokio::main]
 async fn main() {
-    env_logger::init();
+    tracing_subscriber::fmt()
+    .with_max_level(Level::DEBUG)
+    .with_target(true)
+    .init();
     dotenv().ok();
 
     let mongo_client = create_mongo_client().await.unwrap();
