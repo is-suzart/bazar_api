@@ -63,7 +63,7 @@ pub struct CreateUserModel {
     pub telephone: String,
     pub state: String,
     pub city: String,
-    pub role: String,
+    pub role: Option<String>,
 }
 
 #[derive(Deserialize)]

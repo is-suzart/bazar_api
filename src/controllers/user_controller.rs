@@ -10,16 +10,16 @@ pub async fn create_user(
 ) -> impl IntoResponse {  // Especifica que a função implementa IntoResponse
     // Criação do usuário com os dados recebidos
     let (hashed_password, salt) = password::hash(&payload.password);
+    let role = payload.role.unwrap_or("user".to_string());   
     let user = User::new(
         payload.name,
         payload.email,
-        
         hashed_password,
         payload.telephone,
         salt,
         payload.state,
         payload.city,
-        payload.role,
+        role
     );
 
     match insert_user(&state, &user).await {
