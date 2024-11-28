@@ -12,6 +12,7 @@ mod controllers;
 mod models;
 mod helpers;
 mod response;
+mod middlewares;
 
 
 #[tokio::main]
@@ -34,7 +35,8 @@ async fn main() {
         // `GET /` goes to `root`
         .route("/", get(root))
         .merge(routes::user_routes::routes())
-        .with_state(shared_state);
+        .with_state(shared_state)
+        .layer(middlewares::cors_middleware::cors_middleware());
 
     println!("🚀 Server started successfully");
 
