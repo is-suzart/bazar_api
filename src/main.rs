@@ -1,10 +1,8 @@
 use axum::{ routing::get, Router };
 use db::mongo::{ create_mongo_client, AppState };
 use dotenv::dotenv;
-use tracing::Level;
 use std::net::IpAddr;
 use std::sync::Arc;
-use tracing_subscriber;
 
 mod db;
 mod routes;
@@ -17,10 +15,7 @@ mod middlewares;
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt()
-    .with_max_level(Level::DEBUG)
-    .with_target(true)
-    .init();
+
     dotenv().ok();
 
     let mongo_client = create_mongo_client().await.unwrap();
@@ -36,7 +31,8 @@ async fn main() {
         .route("/", get(root))
         .merge(routes::user_routes::routes())
         .with_state(shared_state)
-        .layer(middlewares::cors_middleware::cors_middleware());
+        .layer(middlewares::cors_middleware::cors_middleware())
+        .layer(middlewares::log::tracer());
 
     println!("🚀 Server started successfully");
 

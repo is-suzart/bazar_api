@@ -1,9 +1,11 @@
-use axum::{extract::{Json, Path, State}, http::StatusCode, response::IntoResponse};
+use axum::{extract::{Json, Path, State,Multipart}, http::StatusCode, response::IntoResponse};
+use serde_json::json;
 use crate::{db::{mongo::AppState, user_db::{insert_user, query_user_by_email, query_user_by_id}}, helpers::{password::verify, token::generate_jwt}, models::user_models::{LoginUserModel, ResponseUser}, response::user_response::{CreateUserResponse, QueryUserResponse}};
 use crate:: models::user_models::{CreateUserModel, User};
 use std::sync::Arc;
 use crate::helpers::password;
-
+use uuid::Uuid;
+use std::{fs, path::Path as StdPath};
 
 pub async fn create_user(
     State(state): State<Arc<AppState>>, Json(payload): Json<CreateUserModel>,  // Recebe o payload da requisição
@@ -77,3 +79,52 @@ pub async fn login_user(
     }
 }
 
+pub async fn upload_profile_picture(
+    Path(id): Path<String>,         // Extraindo o ID do path
+    mut multipart: Multipart       // Recebendo o arquivo
+) -> impl IntoResponse {
+    let upload_dir = format!("{}/{}","./uploads",id);
+
+    // Cria o diretório de upload se não existir
+    if !StdPath::new(&upload_dir).exists() {
+        fs::create_dir_all(&upload_dir).unwrap();
+    }
+
+    // Processa os arquivos enviados
+    while let Some(field) = multipart.next_field().await.unwrap() {
+        let file_name = field.file_name().unwrap().to_string();
+        let content_type = field.content_type().unwrap().to_string();
+
+        // Valida se o arquivo é uma imagem
+        if !content_type.starts_with("image/") {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "error": "Only images are allowed" })),
+            );
+        }
+
+        // Gera um nome único para o arquivo
+        let unique_name = format!("{}_{}.{}", id, Uuid::new_v4(), file_name.split('.').last().unwrap());
+        let file_path = format!("{}/{}", &upload_dir, unique_name);
+
+        // Salva o arquivo no sistema
+        let data = field.bytes().await.unwrap();
+        fs::write(&file_path, data).unwrap();
+
+        // Retorna o caminho do arquivo e o ID associado
+        return (
+            StatusCode::OK,
+            Json(json!({
+                "status": "success",
+                "file_path": file_path,
+                "id": id,
+            })),
+        );
+    }
+
+    // Caso nenhum arquivo seja enviado
+    (
+        StatusCode::BAD_REQUEST,
+        Json(json!({ "error": "No file was provided" })),
+    )
+}
