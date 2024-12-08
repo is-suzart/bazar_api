@@ -30,6 +30,7 @@ async fn main() {
         // `GET /` goes to `root`
         .route("/", get(root))
         .merge(routes::user_routes::routes())
+        .merge(routes::product_routes::routes())
         .with_state(shared_state)
         .layer(middlewares::cors_middleware::cors_middleware())
         .layer(middlewares::log::tracer());

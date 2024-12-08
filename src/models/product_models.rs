@@ -59,3 +59,14 @@ impl Product {
         }
     }
 }
+
+
+#[derive(Serialize, Deserialize)]
+pub struct CreateProductModel {
+    pub user_id: String,
+    pub info: ProductInfo,
+    pub storage: Storage,
+    pub images: Option<Vec<String>>, // Opcional para flexibilizar o envio
+    pub product_cards: Option<Vec<ProductCard>>,
+    pub custom_option: Option<HashMap<String, String>>,
+}
