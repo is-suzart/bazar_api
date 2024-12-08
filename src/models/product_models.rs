@@ -1,6 +1,8 @@
 use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use crate::helpers;
 
 
 #[derive(Serialize, Deserialize)]
@@ -11,7 +13,7 @@ pub struct Product {
     pub info: ProductInfo,
     pub images: Vec<String>,
     pub storage: Storage,
-    pub product_cards: Vec<ProductCard>,
+    pub product_cards: Option<Vec<ProductCard>>,
     pub created_at: String,
     pub updated_at: String,
     pub custom_option: HashMap<String, String>
@@ -37,4 +39,23 @@ pub struct ProductCard {
     pub title: String,
     pub desc: String,
     image: String
+}
+
+impl Product {
+    pub fn new(user_id: String,info: ProductInfo, storage: Storage) -> Self {
+        let timestamp_brazil = helpers::timezone::get_current_timezone();
+        let final_id = Uuid::new_v4();
+        Product {
+            id: final_id.to_string(),
+            user_id,
+            active: true,
+            info,
+            images: Vec::new(),
+            storage,
+            product_cards: None,
+            created_at: timestamp_brazil.to_rfc3339().to_string(),
+            updated_at: timestamp_brazil.to_rfc3339().to_string(),
+            custom_option: HashMap::new()
+        }
+    }
 }
