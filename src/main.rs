@@ -1,6 +1,7 @@
 use axum::{ routing::get, Router };
 use db::mongo::{ create_mongo_client, AppState };
 use dotenv::dotenv;
+use tracing::Level;
 use std::net::IpAddr;
 use std::sync::Arc;
 
@@ -18,6 +19,18 @@ async fn main() {
 
     dotenv().ok();
 
+
+    let tracer = tracing_subscriber::fmt()
+    .compact()
+    .with_file(true)
+    .with_line_number(true)
+    .with_thread_ids(true)
+    .with_target(false)
+    .with_max_level(Level::DEBUG)
+    .finish();
+
+    tracing::subscriber::set_global_default(tracer).unwrap();
+    
     let mongo_client = create_mongo_client().await.unwrap();
 
     // Inicializa o AppState com o MongoDB
@@ -32,8 +45,7 @@ async fn main() {
         .merge(routes::user_routes::routes())
         .merge(routes::product_routes::routes())
         .with_state(shared_state)
-        .layer(middlewares::cors_middleware::cors_middleware())
-        .layer(middlewares::log::tracer());
+        .layer(middlewares::cors_middleware::cors_middleware());
 
     println!("🚀 Server started successfully");
 

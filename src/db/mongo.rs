@@ -1,6 +1,6 @@
 use mongodb::{Client, options::ClientOptions, Database};
 use std::env;
-
+#[derive(Debug)]
 pub struct AppState {
     pub database: Database,
 }
