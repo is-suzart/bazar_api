@@ -1,5 +1,5 @@
 use axum::{extract::{Json, Multipart, State}, http::StatusCode, response::IntoResponse};
-use tracing::{info, error, debug};
+use tracing::info;
 use std::{fs, sync::Arc};
 use crate::{db::{mongo::AppState, product_db::update_create_product}, models::product_models::{Storage, UpdateCreateProductModel}};
 use crate::models::product_models::{CreateProductModel, Product};
@@ -33,6 +33,7 @@ pub async fn create_product(
 
 }
 
+#[tracing::instrument]
 pub async fn upload_product(
     State(state): State<Arc<AppState>>,mut multipart: Multipart  
 ) -> impl IntoResponse {
@@ -57,7 +58,7 @@ pub async fn upload_product(
             "pictures" => {
                 if let Some(filename) = field.file_name() {
                     let file_path = format!("./uploads/{}/{}", data_final.id, filename); 
-                    fs::create_dir_all(format!("./uploads/{}", data_final.id));// Cria a estrutura de diretórios se não existir 
+                    let _folder = fs::create_dir_all(format!("./uploads/{}", data_final.id)); // Cria a estrutura de diretórios se não existir 
                     let data = field.bytes().await.unwrap();
                     fs::write(&file_path, &data).unwrap(); // Salva a imagem no disco 
                     data_final.images.push(file_path);
@@ -76,7 +77,7 @@ pub async fn upload_product(
     if data_final.id.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({ "status": "error", "error": "Nenhum produto foi enviado para a solicita~]ap" })),
+            Json(serde_json::json!({ "status": "error", "error": "Nenhum produto foi enviado para a solicitação" })),
         );
     } else {
         match  update_create_product(&state, data_final).await {

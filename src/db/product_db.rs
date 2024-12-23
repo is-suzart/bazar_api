@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{db::mongo::AppState, models::product_models::UpdateCreateProductModel};
 use crate::models::product_models::Product;
-use mongodb::{bson::{doc, to_bson, Document}, options::FindOneOptions, Collection};
+use mongodb::{bson::{doc, to_bson, Document}, Collection};
 use mongodb::results::{InsertOneResult, UpdateResult};
 
 pub async fn insert_product (

@@ -1,9 +1,15 @@
+use axum::error_handling::HandleErrorLayer;
+use axum::http::StatusCode;
 use axum::{ routing::get, Router };
 use db::mongo::{ create_mongo_client, AppState };
 use dotenv::dotenv;
+use tower::buffer::BufferLayer;
+use tower::limit::RateLimitLayer;
+use tower::{ BoxError, ServiceBuilder };
 use tracing::Level;
 use std::net::IpAddr;
 use std::sync::Arc;
+use std::time::Duration;
 
 mod db;
 mod routes;
@@ -13,24 +19,22 @@ mod helpers;
 mod response;
 mod middlewares;
 
-
 #[tokio::main]
 async fn main() {
-
     dotenv().ok();
 
-
-    let tracer = tracing_subscriber::fmt()
-    .compact()
-    .with_file(true)
-    .with_line_number(true)
-    .with_thread_ids(true)
-    .with_target(false)
-    .with_max_level(Level::INFO)
-    .finish();
+    let tracer = tracing_subscriber
+        ::fmt()
+        .compact()
+        .with_file(true)
+        .with_line_number(true)
+        .with_thread_ids(true)
+        .with_target(false)
+        .with_max_level(Level::INFO)
+        .finish();
 
     tracing::subscriber::set_global_default(tracer).unwrap();
-    
+
     let mongo_client = create_mongo_client().await.unwrap();
 
     // Inicializa o AppState com o MongoDB
@@ -45,7 +49,19 @@ async fn main() {
         .merge(routes::user_routes::routes())
         .merge(routes::product_routes::routes())
         .with_state(shared_state)
-        .layer(middlewares::cors_middleware::cors_middleware());
+        .layer(middlewares::cors_middleware::cors_middleware())
+        .layer(
+            ServiceBuilder::new()
+            .layer(HandleErrorLayer::new(|err: BoxError| async move {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Unhandled error: {}", err),
+                )
+            }))
+            .layer(BufferLayer::new(1024))
+            .layer(RateLimitLayer::new(5, Duration::from_secs(1))),
+    );
+        
 
     println!("🚀 Server started successfully");
 
