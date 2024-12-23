@@ -16,8 +16,32 @@ pub struct Product {
     pub created_at: String,
     pub updated_at: String,
     pub custom_option: HashMap<String, String>,
-    pub description: String
+    pub description: String,
+    pub pix_type: String,
+    pub pix_key: String
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct UpdateCreateProductModel {
+    pub id: String,
+    pub description: String,
+    pub pix_type: String,
+    pub images: Vec<String>,
+    pub pix_key: String
+}
+
+impl UpdateCreateProductModel {
+    pub fn default () -> Self {
+        UpdateCreateProductModel {
+            id: String::from(""),
+            description: String::from(""),
+            pix_type: String::from(""),
+            images: Vec::new(),
+            pix_key: String::from(""),
+        }
+    }
+}
+
 #[derive(Debug,Serialize, Deserialize)]
 pub struct ProductInfo {
     pub title: String,
@@ -67,7 +91,9 @@ impl Product {
             created_at: timestamp_brazil.to_rfc3339().to_string(),
             updated_at: timestamp_brazil.to_rfc3339().to_string(),
             custom_option: HashMap::new(),
-            description: "".to_string()
+            description: "".to_string(),
+            pix_type: "".to_string(),
+            pix_key: "".to_string(),
         }
     }
 }
