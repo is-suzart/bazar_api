@@ -106,6 +106,12 @@ pub struct CreateProductModel {
     pub storage: u64,
 }
 
+#[derive(Debug,Serialize, Deserialize)]
+pub struct PaginationParams {
+    pub limit: Option<i64>,
+    pub offset: Option<u64>
+}
+
 // pub struct FrontProductModel {
 //     pub user_id: String,
 //     pub subtitle: String,

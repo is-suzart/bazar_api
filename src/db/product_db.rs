@@ -2,6 +2,8 @@ use std::sync::Arc;
 
 use crate::{db::mongo::AppState, models::product_models::UpdateCreateProductModel};
 use crate::models::product_models::Product;
+use futures::StreamExt;
+use mongodb::Cursor;
 use mongodb::{bson::{doc, to_bson, Document}, Collection};
 use mongodb::results::{InsertOneResult, UpdateResult};
 
@@ -36,4 +38,42 @@ pub async fn update_create_product (
             }
         )
         .await
+}
+
+pub async fn query_user_products(
+    app_state: &Arc<AppState>,
+    id: &String,
+    limit: Option<i64>, 
+    offset: Option<u64>
+) -> mongodb::error::Result<Vec<Document>> {
+    let collection: Collection<Document> = app_state.database.collection("products");
+    let filter = doc! { "user_id": id };
+    // Busca múltiplos documentos
+    let mut cursor: Cursor<Document> = collection.find(filter).limit(limit.unwrap_or(10)).skip(offset.unwrap_or(0)).await?;
+    let mut results = Vec::new();
+
+    // Itera sobre os documentos encontrados
+    while let Some(doc) = cursor.next().await {
+        results.push(doc?); // Adiciona o documento ao vetor
+    }
+
+    Ok(results)
+}
+
+pub async fn query_products(
+    app_state: &Arc<AppState>,
+    limit: Option<i64>,
+    offset: Option<u64>
+) -> mongodb::error::Result<Vec<Document>> {
+    let collection: Collection<Document> = app_state.database.collection("products");
+    let filter = doc! {};
+    let mut cursor: Cursor<Document> = collection.find(filter).limit(limit.unwrap_or(10)).skip(offset.unwrap_or(0)).await?;
+    let mut results = Vec::new();
+
+    // Itera sobre os documentos encontrados
+    while let Some(doc) = cursor.next().await {
+        results.push(doc?); // Adiciona o documento ao vetor
+    }
+
+    Ok(results)
 }
