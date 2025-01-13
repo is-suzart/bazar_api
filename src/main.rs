@@ -1,5 +1,6 @@
 use axum::error_handling::HandleErrorLayer;
 use axum::http::StatusCode;
+use axum::routing::get_service;
 use axum::{ routing::get, Router };
 use db::mongo::{ create_mongo_client, AppState };
 use dotenv::dotenv;
@@ -10,6 +11,8 @@ use tracing::Level;
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::Duration;
+use tower_http::services::ServeDir;
+
 
 mod db;
 mod routes;
@@ -39,6 +42,7 @@ async fn main() {
 
     // Inicializa o AppState com o MongoDB
     let app_state = AppState::new(mongo_client);
+    let static_route = Router::new().nest_service("/uploads", get_service(ServeDir::new("./uploads")));
 
     // Usa Arc para gerenciar o estado compartilhado de forma segura
     let shared_state = Arc::new(app_state);
@@ -48,6 +52,7 @@ async fn main() {
         .route("/", get(root))
         .merge(routes::user_routes::routes())
         .merge(routes::product_routes::routes())
+        .merge(static_route)
         .with_state(shared_state)
         .layer(middlewares::cors_middleware::cors_middleware())
         .layer(
