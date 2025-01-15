@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::{db::mongo::AppState, models::product_models::UpdateCreateProductModel};
 use crate::models::product_models::Product;
 use futures::StreamExt;
+use mongodb::options::FindOneOptions;
 use mongodb::Cursor;
 use mongodb::{bson::{doc, to_bson, Document}, Collection};
 use mongodb::results::{InsertOneResult, UpdateResult};
@@ -76,4 +77,17 @@ pub async fn query_products(
     }
 
     Ok(results)
+}
+
+pub async fn query_product_by_id(
+    app_state: &Arc<AppState>,
+    id: &String
+) -> mongodb::error::Result<Option<Document>> {
+    let collection: Collection<Document> = app_state.database.collection("products");
+    let options = FindOneOptions::builder()
+    .build();
+    let doc = collection.find_one(doc! { "id": id}).with_options(options).await?;
+    Ok(doc)
+
+
 }

@@ -1,7 +1,7 @@
 use axum::{extract::{Json, Multipart, Path, Query, State}, http::StatusCode, response::IntoResponse};
 use tracing::info;
 use std::{fs, sync::Arc};
-use crate::{db::{mongo::AppState, product_db::{query_user_products, update_create_product, query_products}}, models::product_models::{PaginationParams, Storage, UpdateCreateProductModel}};
+use crate::{db::{mongo::AppState, product_db::{query_product_by_id, query_products, query_user_products, update_create_product}}, models::product_models::{PaginationParams, Storage, UpdateCreateProductModel}};
 use crate::models::product_models::{CreateProductModel, Product};
 use crate::db::product_db::insert_product;
 
@@ -181,5 +181,37 @@ pub async fn get_products(
                 "message": format!("Erro ao atualizar o produto: {}", err),
             })),
         )
+    }
+}
+
+pub async fn get_product_with_id(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>
+) -> impl IntoResponse {
+    match query_product_by_id(&state, &id).await {
+        Ok(Some(doc)) => {
+            let product: Product = bson::from_bson(bson::Bson::Document(doc)).unwrap();
+
+            (StatusCode::OK, 
+                Json(serde_json::json!({
+                "status": "success",
+                "products": product
+            })))
+        },
+        Ok(None) => { 
+            (StatusCode::NOT_FOUND,
+                Json(serde_json::json!({
+                    "status": "error",
+                    "message": "Produto não encontrado"
+                })))        }
+        Err(err) => { 
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "status": "error",
+                    "message": format!("Erro ao encontrar o produto: {}", err),
+                })),
+            )
+        }
     }
 }
