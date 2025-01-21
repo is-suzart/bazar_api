@@ -104,8 +104,8 @@ pub async fn upload_profile_picture(
         }
 
         // Gera um nome único para o arquivo
-        let unique_name = format!("{}_{}.{}", id, Uuid::new_v4(), file_name.split('.').last().unwrap());
-        let file_path = format!("{}/{}", &upload_dir, unique_name);
+        let unique_name: String = format!("{}_{}.{}", id, Uuid::new_v4(), file_name.split('.').last().unwrap());
+        let file_path: String = format!("{}/{}", &upload_dir, unique_name);
 
         // Salva o arquivo no sistema
         let data = field.bytes().await.unwrap();

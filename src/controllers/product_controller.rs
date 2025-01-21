@@ -111,6 +111,8 @@ pub async fn upload_product(
         }
     }
 }
+
+
 #[tracing::instrument]
 pub async fn get_user_products (
     State(state): State<Arc<AppState>>,
@@ -153,7 +155,7 @@ pub async fn get_products(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>
 ) -> impl IntoResponse {
-    match query_products(&state,params.limit,params.offset).await {
+    match query_products(&state,params.limit,params.offset, params.title).await {
         Ok(products) if !products.is_empty() => {
         let parsed_products: Vec<Product> = products
             .into_iter()

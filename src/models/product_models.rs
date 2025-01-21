@@ -78,7 +78,7 @@ pub struct ProductCard {
 }
 
 impl Product {
-    pub fn new(user_id: String,info: ProductInfo, storage: Storage) -> Self {
+    pub fn new(user_id: String, info: ProductInfo, storage: Storage) -> Self {
         let timestamp_brazil = helpers::timezone::get_current_timezone();
         let final_id = Uuid::new_v4();
         Product {
@@ -109,7 +109,8 @@ pub struct CreateProductModel {
 #[derive(Debug,Serialize, Deserialize)]
 pub struct PaginationParams {
     pub limit: Option<i64>,
-    pub offset: Option<u64>
+    pub offset: Option<u64>,
+    pub title: Option<String>
 }
 
 // pub struct FrontProductModel {
@@ -123,3 +124,4 @@ pub struct PaginationParams {
 //     pub productType: String, // 'type' is a reserved keyword in Rust, so we use 'r#type' to escape it
 //     pub place: Option<String>, // Rust's equivalent to Dart's nullable String
 // }
+    

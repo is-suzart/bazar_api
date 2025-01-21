@@ -64,10 +64,16 @@ pub async fn query_user_products(
 pub async fn query_products(
     app_state: &Arc<AppState>,
     limit: Option<i64>,
-    offset: Option<u64>
+    offset: Option<u64>,
+    title: Option<String>
 ) -> mongodb::error::Result<Vec<Document>> {
     let collection: Collection<Document> = app_state.database.collection("products");
-    let filter = doc! {};
+    let filter = match title {
+        Some(title) => doc! {
+            "info.title": { "$regex": title, "$options": "i" }
+        },
+        None => doc! {}
+    };
     let mut cursor: Cursor<Document> = collection.find(filter).limit(limit.unwrap_or(10)).skip(offset.unwrap_or(0)).await?;
     let mut results = Vec::new();
 
@@ -78,6 +84,8 @@ pub async fn query_products(
 
     Ok(results)
 }
+
+
 
 pub async fn query_product_by_id(
     app_state: &Arc<AppState>,
