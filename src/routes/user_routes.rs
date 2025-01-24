@@ -13,5 +13,7 @@ pub fn routes() -> Router<Arc<AppState>> {
         .route("/users/favorite", post(favorites_controller::create_favorite)) 
         .route("/users/favorite/{userId}", get(favorites_controller::get_favorites))  
         .route("/users/favorite/{userId}/{id}", delete(favorites_controller::delete_favorite)) 
+        .route("/users/favorite/{userId}/{id}", get(favorites_controller::get_favorite_by_id)) 
+
         
 }

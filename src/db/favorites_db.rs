@@ -52,3 +52,12 @@ pub async fn delete_favorite(
     collection.delete_one(doc! { "user_id": user_id, "product_id": product_id }).await?;
     Ok(())
 }
+pub async fn get_favorite_by_id(
+    state: &Arc<AppState>,
+    user_id: &String,
+    product_id: &String,
+) -> mongodb::error::Result<Option<Document>> {
+    let collection: Collection<Document> = state.database.collection("favorites");
+    let doc = collection.find_one(doc! { "user_id": user_id, "product_id": product_id }).await?;
+    Ok(doc)
+}

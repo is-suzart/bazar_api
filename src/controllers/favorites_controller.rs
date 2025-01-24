@@ -79,3 +79,29 @@ pub async fn delete_favorite(
         }
     }
 }
+pub async fn get_favorite_by_id(
+    State(state): State<Arc<AppState>>,
+    Path((user_id, product_id)): Path<(String, String)>
+) -> impl IntoResponse {
+    match crate::db::favorites_db::get_favorite_by_id(&state, &user_id,&product_id).await {
+        Ok(Some(favorite)) => {
+            (StatusCode::OK, Json(serde_json::json!({
+                "status": "success",
+                "message": "Produto favoritado recebido com sucesso",
+                "favorite": favorite
+            })))
+        }
+        Ok(None) => {
+            (StatusCode::NOT_FOUND, Json(serde_json::json!({
+                "status": "error",
+                "message": "Produto favoritado não encontrado"
+            })))
+        }
+        Err(err) => {
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({
+                "status": "error",
+                "message": format!("Erro ao buscar o produto favoritado: {}", err)
+            })))
+        }
+    }
+}
