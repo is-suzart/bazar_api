@@ -20,7 +20,6 @@ pub async fn create_product(
         Ok(_insert_result) => {
             info!("Produto criado com sucesso: {}", &product.id);
             (
-            
                 StatusCode::CREATED,
                 Json(serde_json::json!({ "status": "success", "productId": &product.id, "message": "Produto criado com sucesso!" }))
             )

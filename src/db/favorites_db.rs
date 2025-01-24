@@ -1,17 +1,22 @@
+use std::sync::Arc;
+use crate::db::mongo::AppState;
+use crate::models::product_models::FavoriteProduct;
+use bson::to_bson;
+use futures::TryStreamExt;
 use mongodb::bson::{doc, Document};
-use mongodb::options::AggregateOptions;
-use mongodb::{Collection, error::Result};
+use mongodb::Collection;
 
-async fn get_favorite_products(
-    favorites_collection: Collection<Document>,
-    user_id: &str,
-) -> Result<Vec<Document>> {
+pub async fn get_favorite_products(
+    state: &Arc<AppState>,
+    user_id: &String,
+) -> mongodb::error::Result<Vec<Document>> {
+    let collection: Collection<Document> = state.database.collection("favorites");
     let pipeline = vec![
-        doc! { "$match": { "userId": user_id } }, // Filtra os favoritos do usuário
+        doc! { "$match": { "user_id": user_id } }, // Filtra os favoritos do usuário
         doc! { 
             "$lookup": {
                 "from": "products", // Nome da coleção de produtos
-                "localField": "productId", // Campo na coleção de favoritos
+                "localField": "product_id", // Campo na coleção de favoritos
                 "foreignField": "id", // Campo correspondente na coleção de produtos
                 "as": "product" // Nome do campo para resultados combinados
             }
@@ -20,7 +25,30 @@ async fn get_favorite_products(
         doc! { "$replaceRoot": { "newRoot": "$product" } } // Substitui o documento pelo conteúdo do produto
     ];
 
-    let mut cursor = favorites_collection.aggregate(pipeline).await?;
+    let cursor = collection.aggregate(pipeline).await?;
     let results: Vec<Document> = cursor.try_collect().await?;
     Ok(results)
+}
+
+pub async fn post_favorite(
+    state: &Arc<AppState>,
+    favorite: &FavoriteProduct,
+) -> mongodb::error::Result<()> {
+    let collection: Collection<Document> = state.database.collection("favorites");
+    let favorite_doc = to_bson(favorite)?
+        .as_document()
+        .unwrap()
+        .clone();
+    collection.insert_one(favorite_doc).await?;
+    Ok(())
+}
+
+pub async fn delete_favorite(
+    state: &Arc<AppState>,
+    user_id: &String,
+    product_id: &String,
+) -> mongodb::error::Result<()> {
+    let collection: Collection<Document> = state.database.collection("favorites");
+    collection.delete_one(doc! { "user_id": user_id, "product_id": product_id }).await?;
+    Ok(())
 }

@@ -113,6 +113,12 @@ pub struct PaginationParams {
     pub title: Option<String>
 }
 
+#[derive(Debug,Serialize, Deserialize)]
+pub struct FavoriteProduct {
+    pub user_id: String,
+    pub product_id: String
+}
+
 // pub struct FrontProductModel {
 //     pub user_id: String,
 //     pub subtitle: String,
