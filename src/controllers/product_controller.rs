@@ -1,7 +1,7 @@
 use axum::{extract::{Json, Multipart, Path, Query, State}, http::StatusCode, response::IntoResponse};
 use tracing::info;
 use std::{fs, sync::Arc};
-use crate::{db::{mongo::AppState, product_db::{delete_product_by_id, query_product_by_id, query_product_with_user, query_products, query_user_products, update_create_product, update_product_to_active, update_product_to_inactive, update_product_to_mongo}}, models::{product_models::{PaginationParams, Storage, UpdateCreateProductModel}, user_models::{ResponseUser, User}}};
+use crate::{db::{mongo::AppState, product_db::{delete_product_by_id, query_product_by_id, query_product_with_user, query_products, query_user_products, update_create_product, update_product_to_active, update_product_to_inactive, update_product_to_mongo}}, models::{product_models::{PaginationParams, Storage, UpdateCreateProductModel}, user_models::ResponseUser}};
 use crate::models::product_models::{CreateProductModel, Product};
 use crate::db::product_db::insert_product;
 
@@ -217,7 +217,7 @@ pub async fn get_product_with_id(
         }
     }
 }
-
+#[tracing::instrument]
 pub async fn get_product_with_id_and_user(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>
