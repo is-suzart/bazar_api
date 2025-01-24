@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{db::mongo::AppState, models::product_models::UpdateCreateProductModel};
 use crate::models::product_models::Product;
-use futures::StreamExt;
+use futures::{StreamExt, TryStreamExt};
 use mongodb::options::FindOneOptions;
 use mongodb::Cursor;
 use mongodb::{bson::{doc, to_bson, Document}, Collection};
@@ -99,6 +99,46 @@ pub async fn query_product_by_id(
 
 
 }
+
+pub async fn query_product_with_user(
+    app_state: &Arc<AppState>,
+    product_id: &String,
+) -> mongodb::error::Result<Option<(Document, Document)>> {
+    let collection: Collection<Document> = app_state.database.collection("products");
+
+    let pipeline = vec![
+        doc! { "$match": { "id": product_id } }, // Filtra o produto pelo ID
+        doc! {
+            "$lookup": {
+                "from": "users", // Nome da coleção de usuários
+                "localField": "user_id", // Campo no produto que referencia o usuário
+                "foreignField": "id", // Campo correspondente na coleção de usuários
+                "as": "user" // Nome do campo onde os dados do usuário serão armazenados
+            }
+        },
+        doc! { "$unwind": "$user" }, // Garante que os dados do usuário não estejam em um array
+        doc! { 
+            "$project": {
+                "user.password": 0, // Exclui o campo "password" do usuário
+                "user.salt": 0,     // Exclui o campo "salt" do usuário
+            }
+        }
+    ];
+
+    let mut cursor = collection.aggregate(pipeline).await?;
+    if let Some(doc) = cursor.try_next().await? {
+        // Extrai os dados do produto e do usuário
+        if let Ok(user) = doc.get_document("user") {
+            let user = user.clone(); // Clona o documento do usuário
+            let mut product = doc.clone(); // Clona o documento do produto
+            product.remove("user"); // Remove o campo "user" do produto para evitar redundância
+            return Ok(Some((product, user)));
+        }
+    }
+    Ok(None) // Retorna None se nenhum documento for encontrado
+}
+
+
 
 pub async fn update_product_to_inactive(
     app_state: &Arc<AppState>,

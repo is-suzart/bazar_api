@@ -13,5 +13,6 @@ pub fn routes () -> Router<Arc<AppState>>{
         .route("/products/active/{id}", post(product_controller::active_product_by_id))
         .route("/products/delete/{id}", post(product_controller::delete_product))
         .route("/products/{id}", get(product_controller::get_product_with_id))
+        .route("/products/full/{id}", get(product_controller::get_product_with_id_and_user))
         .route("/users/{id}/products", get(product_controller::get_user_products))
 }

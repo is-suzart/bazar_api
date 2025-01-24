@@ -1,7 +1,7 @@
 use axum::{extract::{Json, Multipart, Path, Query, State}, http::StatusCode, response::IntoResponse};
 use tracing::info;
 use std::{fs, sync::Arc};
-use crate::{db::{mongo::AppState, product_db::{delete_product_by_id, query_product_by_id, query_products, query_user_products, update_create_product, update_product_to_active, update_product_to_inactive, update_product_to_mongo}}, models::product_models::{PaginationParams, Storage, UpdateCreateProductModel}};
+use crate::{db::{mongo::AppState, product_db::{delete_product_by_id, query_product_by_id, query_product_with_user, query_products, query_user_products, update_create_product, update_product_to_active, update_product_to_inactive, update_product_to_mongo}}, models::{product_models::{PaginationParams, Storage, UpdateCreateProductModel}, user_models::{ResponseUser, User}}};
 use crate::models::product_models::{CreateProductModel, Product};
 use crate::db::product_db::insert_product;
 
@@ -198,6 +198,40 @@ pub async fn get_product_with_id(
                 Json(serde_json::json!({
                 "status": "success",
                 "products": product
+            })))
+        },
+        Ok(None) => { 
+            (StatusCode::NOT_FOUND,
+                Json(serde_json::json!({
+                    "status": "error",
+                    "message": "Produto não encontrado"
+                })))        }
+        Err(err) => { 
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "status": "error",
+                    "message": format!("Erro ao encontrar o produto: {}", err),
+                })),
+            )
+        }
+    }
+}
+
+pub async fn get_product_with_id_and_user(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>
+) -> impl IntoResponse {
+    match query_product_with_user(&state, &id).await {
+        Ok(Some((product,user))) => {
+            let final_product: Product = bson::from_bson(bson::Bson::Document(product)).unwrap();
+            let final_user: ResponseUser = bson::from_bson(bson::Bson::Document(user)).unwrap();
+
+            (StatusCode::OK, 
+                Json(serde_json::json!({
+                "status": "success",
+                "products": final_product,
+                "user": final_user
             })))
         },
         Ok(None) => { 
