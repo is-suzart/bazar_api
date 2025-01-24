@@ -8,7 +8,7 @@ COPY . .
 RUN cargo build --release
 
 # Adicionar permissão de execução ao binário
-RUN chmod +x /usr/src/app/target/release/hello_actix
+RUN chmod +x /usr/src/app/target/release/bazar_api 
 
 # Comando para iniciar o servidor
 CMD ["cargo", "run", "--release"]
