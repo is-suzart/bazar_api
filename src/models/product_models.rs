@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::helpers;
 
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize,Debug)]
 pub struct Product {
     pub id: String,
     pub user_id: String,
@@ -54,7 +54,7 @@ pub struct ProductInfo {
     pub place: Option<String>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize,Debug)]
 pub struct Storage {
     pub total: u64,
     pub avaliable: u64,

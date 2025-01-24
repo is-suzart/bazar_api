@@ -1,7 +1,7 @@
 use axum::{extract::{Json, Multipart, Path, Query, State}, http::StatusCode, response::IntoResponse};
 use tracing::info;
 use std::{fs, sync::Arc};
-use crate::{db::{mongo::AppState, product_db::{query_product_by_id, query_products, query_user_products, update_create_product}}, models::product_models::{PaginationParams, Storage, UpdateCreateProductModel}};
+use crate::{db::{mongo::AppState, product_db::{delete_product_by_id, query_product_by_id, query_products, query_user_products, update_create_product, update_product_to_active, update_product_to_inactive, update_product_to_mongo}}, models::product_models::{PaginationParams, Storage, UpdateCreateProductModel}};
 use crate::models::product_models::{CreateProductModel, Product};
 use crate::db::product_db::insert_product;
 
@@ -151,6 +151,7 @@ pub async fn get_user_products (
     }
 }
 
+#[tracing::instrument]
 pub async fn get_products(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>
@@ -185,7 +186,7 @@ pub async fn get_products(
         )
     }
 }
-
+#[tracing::instrument]
 pub async fn get_product_with_id(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>
@@ -215,5 +216,148 @@ pub async fn get_product_with_id(
                 })),
             )
         }
+    }
+}
+#[tracing::instrument]
+pub async fn inactive_product_by_id(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>
+) -> impl IntoResponse {
+    
+    match update_product_to_inactive(&state, &id).await {
+        Ok(result) => {
+            if result.matched_count == 0 {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(serde_json::json!({
+                        "status": "error",
+                        "message": "Produto não encontrado"
+                    })),
+                )
+            } else {
+                (
+                    StatusCode::OK,
+                    Json(serde_json::json!({
+                        "status": "success",
+                        "message": "Produto desativado com sucesso",
+                        "modified": result.modified_count
+                    })),
+                )
+            }
+        }
+        Err(err) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({
+                "status": "error",
+                "message": format!("Erro ao desativar o produto: {}", err),
+            })),
+        )
+    }
+}
+
+#[tracing::instrument]
+pub async fn active_product_by_id(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>
+) -> impl IntoResponse {
+    
+    match update_product_to_active(&state, &id).await {
+        Ok(result) => {
+            if result.matched_count == 0 {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(serde_json::json!({
+                        "status": "error",
+                        "message": "Produto não encontrado"
+                    })),
+                )
+            } else {
+                (
+                    StatusCode::OK,
+                    Json(serde_json::json!({
+                        "status": "success",
+                        "message": "Produto ativado com sucesso",
+                        "modified": result.modified_count
+                    })),
+                )
+            }
+        }
+        Err(err) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({
+                "status": "error",
+                "message": format!("Erro ao ativar o produto: {}", err),
+            })),
+        )
+    }
+}
+
+#[tracing::instrument]
+pub async fn delete_product(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>
+) -> impl IntoResponse {
+    match delete_product_by_id(&state, &id).await {
+        Ok(result) => {
+            if result.deleted_count == 0 {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(serde_json::json!({
+                        "status": "error",
+                        "message": "Produto não encontrado"
+                    })),
+                )
+            } else {
+                (
+                    StatusCode::OK,
+                    Json(serde_json::json!({
+                        "status": "success",
+                        "message": "Produto deletado com sucesso",
+                        "deleted": result.deleted_count
+                    })),
+                )
+            }
+        } Err(err) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({
+                "status": "error",
+                "message": format!("Erro ao deletar o produto: {}", err),
+            })),
+        )
+    }
+}
+
+#[tracing::instrument]
+pub async fn update_product(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<Product>
+) -> impl IntoResponse {
+    match update_product_to_mongo(&state, &payload).await {
+        Ok(result) => {
+            if result.matched_count == 0 {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(serde_json::json!({
+                        "status": "error",
+                        "message": "Produto não encontrado"
+                    })),
+                )
+            } else {
+                (
+                    StatusCode::OK,
+                    Json(serde_json::json!({
+                        "status": "success",
+                        "message": "Produto atualizado com sucesso",
+                        "modified": result.modified_count
+                    })),
+                )
+            }
+        } Err(err) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({
+                "status": "error",
+                "message": format!("Erro ao atualizar o produto: {}", err),
+            })),
+        )
     }
 }

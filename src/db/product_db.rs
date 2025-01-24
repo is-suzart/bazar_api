@@ -6,7 +6,7 @@ use futures::StreamExt;
 use mongodb::options::FindOneOptions;
 use mongodb::Cursor;
 use mongodb::{bson::{doc, to_bson, Document}, Collection};
-use mongodb::results::{InsertOneResult, UpdateResult};
+use mongodb::results::{DeleteResult, InsertOneResult, UpdateResult};
 
 pub async fn insert_product (
     state: &Arc<AppState>,
@@ -70,9 +70,9 @@ pub async fn query_products(
     let collection: Collection<Document> = app_state.database.collection("products");
     let filter = match title {
         Some(title) => doc! {
-            "info.title": { "$regex": title, "$options": "i" }
+            "info.title": { "$regex": title, "$options": "i","active": true }
         },
-        None => doc! {}
+        None => doc! {"active": true}
     };
     let mut cursor: Cursor<Document> = collection.find(filter).limit(limit.unwrap_or(10)).skip(offset.unwrap_or(0)).await?;
     let mut results = Vec::new();
@@ -98,4 +98,61 @@ pub async fn query_product_by_id(
     Ok(doc)
 
 
+}
+
+pub async fn update_product_to_inactive(
+    app_state: &Arc<AppState>,
+    id: &String
+) -> mongodb::error::Result<UpdateResult> {
+    let collection: Collection<Document> = app_state.database.collection("products");
+    collection
+        .update_one(
+            doc! { "id": id },
+            doc! {
+                "$set": {
+                    "active": false
+                }
+            }
+        )
+        .await
+}
+
+pub async fn delete_product_by_id(
+    app_state: &Arc<AppState>,
+    id: &String
+) -> mongodb::error::Result<DeleteResult> {
+    let collection: Collection<Document> = app_state.database.collection("products");
+    collection
+        .delete_one(
+            doc! { "id": id },
+        )
+        .await
+}
+pub async fn update_product_to_mongo(
+    app_state: &Arc<AppState>,
+    product: &Product
+) -> mongodb::error::Result<UpdateResult> {
+    let collection: Collection<Document> = app_state.database.collection("products");
+    let product_doc = to_bson(product)?
+        .as_document()
+        .unwrap()
+        .clone();
+    collection.update_one(doc! { "id": &product.id }, product_doc).await
+}
+
+pub async fn update_product_to_active(
+    app_state: &Arc<AppState>,
+    id: &String
+) -> mongodb::error::Result<UpdateResult> {
+    let collection: Collection<Document> = app_state.database.collection("products");
+    collection
+        .update_one(
+            doc! { "id": id },
+            doc! {
+                "$set": {
+                    "active": true
+                }
+            }
+        )
+        .await
 }
