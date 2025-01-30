@@ -70,7 +70,8 @@ pub async fn query_products(
     let collection: Collection<Document> = app_state.database.collection("products");
     let filter = match title {
         Some(title) => doc! {
-            "info.title": { "$regex": title, "$options": "i","active": true }
+            "info.title": { "$regex": title, "$options": "i" },
+            "active": true
         },
         None => doc! {"active": true}
     };
